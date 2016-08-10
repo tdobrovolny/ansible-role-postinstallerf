@@ -1,0 +1,13 @@
+---
+# Main task - envelop - for postinstallerf
+ 
+- name: Assert supported distribution
+  assert:
+    that:
+      - ansible_distribution + '-' + ansible_distribution_major_version in postinstallerf_supported_distributions
+
+- name: "Include tasks for {{ ansible_distribution }}"
+  include: Fedora.yml
+  # include: "{{ ansible_distribution }}.yml" runs ounly the first task from included file
+  # ansible 2.2.0 (devel df81f1197f) last updated 2016/08/10 01:31:46
+  when: ansible_distribution == "Fedora"

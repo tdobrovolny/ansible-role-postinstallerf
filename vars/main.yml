@@ -1,0 +1,8 @@
+---
+# vars file for postinstallerf
+postinstallerf_supported_distributions:
+  - Fedora-22
+  - Fedora-23
+  - Fedora-24
+  - Fedora-25
+  

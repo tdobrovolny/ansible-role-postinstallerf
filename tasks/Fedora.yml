@@ -1,0 +1,32 @@
+---
+# Working task for postinstallerf on Fedora
+
+- name: Assert that we are on supported Fedora version
+  assert:
+    that:
+      - ansible_distribution + '-' + ansible_distribution_major_version in postinstallerf_supported_distributions
+      - ansible_distribution == "Fedora"
+
+- name: Install GPG key
+  rpm_key:
+    state: present
+    key: https://raw.githubusercontent.com/kuboosoft/postinstallerf/master/GPG/{{ ansible_distribution_major_version }}/RPM-GPG-KEY-postinstallerf
+  
+- name: Download and install repository configuration 
+  get_url:
+    url: https://raw.githubusercontent.com/kuboosoft/postinstallerf/master/postinstallerf.repo
+    dest: /etc/yum.repos.d/postinstallerf.repo
+    mode: "0644"
+    owner: root
+    group: root
+  register: postinstallerf_repo
+
+- name: Clean up of temporary files kept for repositories
+  command: dnf clean all warn=no
+  when: postinstallerf_repo|changed and ansible_pkg_mgr == "dnf"
+
+- name: Install postinstallerf
+  package:
+    name: postinstallerf
+    state: present
+ 
