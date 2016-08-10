@@ -40,8 +40,8 @@ galaxy_info:
   #  - 21
      - 22
      - 23
-     - 24
-     - 25
+  #  - 24 - unknown on galaxy.ansible.com 20160810
+  #  - 25 - unknown on galaxy.ansible.com 20160810
   #- name: opensuse
   #  versions:
   #  - all
