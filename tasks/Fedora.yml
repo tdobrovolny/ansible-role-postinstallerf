@@ -12,21 +12,65 @@
     state: present
     key: https://raw.githubusercontent.com/kuboosoft/postinstallerf/master/GPG/{{ ansible_distribution_major_version }}/RPM-GPG-KEY-postinstallerf
   
-- name: Download and install repository configuration 
-  get_url:
-    url: https://raw.githubusercontent.com/kuboosoft/postinstallerf/master/postinstallerf.repo
-    dest: /etc/yum.repos.d/postinstallerf.repo
-    mode: "0644"
-    owner: root
-    group: root
-  register: postinstallerf_repo
+- name: Check with yum if repository postinstallerf is installed and enabled
+  command: yum-config-manager --dump postinstallerf warn=no
+  register: postinstallerf_repo_check_yum
+  failed_when: postinstallerf_repo_check_yum.rc != 0 and "No matching repo to modify" not in postinstallerf_repo_check_yum.stderr
+  changed_when: False
+  when: ansible_pkg_mgr == "yum"
+
+- name: Download and install repository configuration with yum
+  command: yum-config-manager --add-repo=https://raw.githubusercontent.com/kuboosoft/postinstallerf/master/postinstallerf.repo
+  when: ansible_pkg_mgr == "yum" and "No matching repo to modify" in postinstallerf_repo_check_yum.stderr
+
+- name: Check with yum if repository postinstallerf-updates is enabled
+  command: yum-config-manager --dump postinstallerf-updates warn=no
+  register: postinstallerf_repo_updates_yum
+  changed_when: False
+  when: ansible_pkg_mgr == "yum"
+   
+- name: Enable disabled postinstallerf repository with yum
+  command: yum-config-manager --set-enabled postinstallerf warn=no
+  changed_when: True
+  when: ansible_pkg_mgr == "yum" and "enabled = False" in postinstallerf_repo_check_yum.stdout
+
+- name: Enable disabled postinstallerf-updates repository with yum
+  command: yum-config-manager --set-enabled postinstallerf-updates warn=no
+  changed_when: True
+  when: ansible_pkg_mgr == "yum" and "enabled = False" in postinstallerf_repo_updates_yum.stdout
+
+- name: Check with dnf if repository postinstallerf is installed and enabled
+  command: dnf config-manager --dump postinstallerf warn=no
+  register: postinstallerf_repo_check_dnf
+  failed_when: postinstallerf_repo_check_dnf.rc != 0 and "No matching repo to modify" not in postinstallerf_repo_check_dnf.stderr
+  changed_when: False
+  when: ansible_pkg_mgr == "dnf"
+   
+- name: Download and install repository configuration with dnf 
+  command: dnf config-manager --add-repo=https://raw.githubusercontent.com/kuboosoft/postinstallerf/master/postinstallerf.repo warn=no
+  when: ansible_pkg_mgr == "dnf" and "No matching repo to modify" in postinstallerf_repo_check_dnf.stderr
+
+- name: Check with dnf if repository postinstallerf-updates is enabled
+  command: dnf config-manager --dump postinstallerf-updates warn=no
+  register: postinstallerf_repo_updates_dnf
+  changed_when: False
+  when: ansible_pkg_mgr == "dnf"
+   
+- name: Enable disabled postinstallerf repository with dnf
+  command: dnf config-manager --set-enabled postinstallerf warn=no
+  changed_when: True
+  when: ansible_pkg_mgr == "dnf" and "enabled = False" in postinstallerf_repo_check_dnf.stdout
+
+- name: Enable disabled postinstallerf-updates repository with dnf
+  command: dnf config-manager --set-enabled postinstallerf-updates warn=no
+  changed_when: True
+  when: ansible_pkg_mgr == "dnf" and "enabled = False" in postinstallerf_repo_updates_dnf.stdout
 
 - name: Clean up of temporary files kept for repositories
   command: dnf clean all warn=no
-  when: postinstallerf_repo|changed and ansible_pkg_mgr == "dnf"
+  when: ansible_pkg_mgr == "dnf" and ("No matching repo to modify" in postinstallerf_repo_check_dnf.stderr or "enabled = False" in postinstallerf_repo_check_dnf.stdout)
 
 - name: Install postinstallerf
   package:
     name: postinstallerf
-    state: present
- 
+    state: latest
